@@ -1,0 +1,109 @@
+name: Update Flatpak Repo
+on:
+    workflow_dispatch:
+        inputs:
+            repo: 
+                description: 'Github repo containing flatpak'
+                type: 'string'
+                required: true
+            
+            commit:
+                description: 'Commit of flatpak to be built'
+                type: 'string'
+                required: false
+
+            manifest:
+                description: 'Path to manifest in repo'
+                type: 'string'
+                required: true
+
+concurrency: ${{ github.repository }}
+permissions:
+    contents: write
+
+env:
+    # Used to generate .flatpakref and .flatpakrepo files, change if you are using a custom domain
+    PAGES_REPO_URL: ${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+    # The value '0' means only the latest version of a given flatpak is kept in the repo
+    FLATPAK_HISTORY_LEN: 0
+    # Wether or not to generate deltas for updates, uses extra storage but can make updates smaller
+    FLATPAK_DELTAS: true
+     
+    FLATPAK_SRC: src-dir
+    FLATPAK_BUILD: build-dir
+    PAGES_REPO: repo-dir
+
+jobs:
+    build: 
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Checkout Flatpak Source
+            uses: actions/checkout@v3
+            with:
+                repository: ${{ inputs.repo }}
+                ref: ${{ inputs.commit }}
+                submodules: true
+                path: ${{ env.FLATPAK_SRC }}
+
+          - name: Checkout Pages Repo
+            uses: actions/checkout@v3
+            with:
+                ref: gh-pages
+                path: ${{ env.PAGES_REPO }}
+
+          - name: Install flatpak-builder and flatpak
+            run: |
+                set -e
+                sudo apt update -y
+                sudo apt install -y flatpak-builder
+                sudo apt install -y flatpak
+                
+          - name: Dump canonical manifest
+            run: |
+                set -e
+                flatpak-builder --show-manifest ./${{ env.FLATPAK_SRC }}/${{ inputs.manifest }} > canonical-manifest.json
+
+          - name: Download flatpak SDK and sources
+            run: |
+              set -e
+              flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+              flatpak-builder --install-deps-from=flathub --install-deps-only --user /dev/null ./${{ env.FLATPAK_SRC }}/${{ inputs.manifest }}
+              flatpak-builder --download-only /dev/null ./${{ env.FLATPAK_SRC }}/${{ inputs.manifest }}
+          
+          - name: Prime cache
+            uses: actions/cache@v2
+            with:
+                path: |
+                    .flatpak-builder/ccache
+                key: flatpak-builder-${{ hashFiles('canonical-manifest.json') }}
+                restore-keys: |
+                    flatpak-builder-
+
+          - name: why cant i just see the filesystem
+            run: |
+                set -e
+                ls -aR | grep repo
+
+          - name: Build flatpak
+            run: |
+                set -e
+                flatpak-builder --disable-updates --disable-download --ccache --sandbox --repo="./${{ env.PAGES_REPO }}/repo" ${{ env.FLATPAK_BUILD }} ${{ env.FLATPAK_SRC }}/${{ inputs.manifest }}
+
+          - name: Prune Repo
+            run: |
+                set -e
+                flatpak build-update-repo --prune --prune-depth=${{ env.FLATPAK_HISTORY_LEN }} ${{ env.PAGES_REPO }}/repo
+
+          - name: Generate Deltas
+            if: ${{ env.FLATPAK_DELTAS }} 
+            run: |
+                set -e
+                flatpak build-update-repo --generate-static-deltas ${{ env.PAGES_REPO }}/repo
+        
+          - name: Deploy Repo
+            uses: peaceiris/actions-gh-pages@v3
+            with:
+                github_token: ${{ secrets.GITHUB_TOKEN }}
+                publish_dir: ${{ env.PAGES_REPO }}
+
