@@ -9,3 +9,4 @@ The workflow used is largely stolen from: https://github.com/TheEvilSkeleton/fla
 - Generate .flatpakrepo file
 - Split workflow into multiple jobs
 - Generate a download/instructions page?
+- Sign flatpaks in repo
