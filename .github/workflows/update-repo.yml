@@ -79,11 +79,6 @@ jobs:
                 restore-keys: |
                     flatpak-builder-
 
-          - name: why cant i just see the filesystem
-            run: |
-                set -e
-                ls -aR | grep repo
-
           - name: Build flatpak
             run: |
                 set -e
