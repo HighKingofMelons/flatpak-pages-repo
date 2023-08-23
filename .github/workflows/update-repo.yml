@@ -87,6 +87,7 @@ jobs:
           - name: Prune Repo
             run: |
                 set -e
+                mkdir -p ./${{ env.PAGES_REPO }}/repo/refs/remotes ./${{ env.PAGES_REPO }}/repo/refs/mirrors
                 touch ./${{ env.PAGES_REPO }}/repo/refs/remotes/.gitkeep ./${{ env.PAGES_REPO }}/repo/refs/mirrors/.gitkeep
                 flatpak build-update-repo --prune --prune-depth=${{ env.FLATPAK_HISTORY_LEN }} ./${{ env.PAGES_REPO }}/repo
 
