@@ -93,13 +93,13 @@ jobs:
           - name: Prune Repo
             run: |
                 set -e
-                flatpak build-update-repo --prune --prune-depth=${{ env.FLATPAK_HISTORY_LEN }} ${{ env.PAGES_REPO }}/repo
+                flatpak build-update-repo --prune --prune-depth=${{ env.FLATPAK_HISTORY_LEN }} ./${{ env.PAGES_REPO }}/repo
 
           - name: Generate Deltas
             if: ${{ env.FLATPAK_DELTAS }} 
             run: |
                 set -e
-                flatpak build-update-repo --generate-static-deltas ${{ env.PAGES_REPO }}/repo
+                flatpak build-update-repo --generate-static-deltas ./${{ env.PAGES_REPO }}/repo
         
           - name: Deploy Repo
             uses: peaceiris/actions-gh-pages@v3
