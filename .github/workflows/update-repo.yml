@@ -96,6 +96,13 @@ jobs:
             run: |
                 set -e
                 flatpak build-update-repo --generate-static-deltas ./${{ env.PAGES_REPO }}/repo
+
+          - name: Write .flatpakrepo file
+            run: |
+                set -e
+                echo "[Flatpak Repo]
+                      Title=${{ github.repository }}
+                      Url=${{ env.PAGES_REPO_URL }}/repo/" > ${{ env.PAGES_REPO }}/repo.flatpakrepo
         
           - name: Deploy Repo
             uses: peaceiris/actions-gh-pages@v3
