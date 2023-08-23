@@ -106,4 +106,6 @@ jobs:
             with:
                 github_token: ${{ secrets.GITHUB_TOKEN }}
                 publish_dir: ${{ env.PAGES_REPO }}
+                enable_jekyll: true
+                force_orphan: true
 
