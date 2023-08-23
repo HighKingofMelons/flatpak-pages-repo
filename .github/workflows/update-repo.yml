@@ -101,8 +101,8 @@ jobs:
             run: |
                 set -e
                 echo "[Flatpak Repo]
-                      Title=${{ github.repository }}
-                      Url=${{ env.PAGES_REPO_URL }}/repo/" > ${{ env.PAGES_REPO }}/repo.flatpakrepo
+                  Title=${{ github.repository }}
+                  Url=${{ env.PAGES_REPO_URL }}repo/" > ${{ env.PAGES_REPO }}/repo.flatpakrepo
         
           - name: Deploy Repo
             uses: peaceiris/actions-gh-pages@v3
