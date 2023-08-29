@@ -89,8 +89,7 @@ jobs:
           - name: Prepare GPG-pubkey
             run: |
                 set -e
-                gpg -a --export ${{ steps.gpg-key.outputs.fingerprint }} > pubkey.gpg
-                export PUBKEY_BASE64=$(gpg --export ${{ steps.gpg-key.outputs.fingerprint }} | base64 --wrap=0)
+                gpg --export ${{ steps.gpg-key.outputs.fingerprint }} > pubkey.gpg
 
           - name: Build flatpak
             run: |
@@ -112,7 +111,7 @@ jobs:
                 echo "[Flatpak Repo]
                 Title=${{ env.PAGES_REPO_URL }}
                 Url=${{ env.PAGES_REPO_URL }}repo/
-                GPGKey=$PUBKEY_BASE64" > ${{ env.PAGES_REPO }}/${{ github.repository_owner }}.flatpakrepo
+                GPGKey=$(cat pubkey.gpg | base64 --wrap=0)" > ${{ env.PAGES_REPO }}/${{ github.repository_owner }}.flatpakrepo
         
           - name: Deploy Repo
             uses: peaceiris/actions-gh-pages@v3
