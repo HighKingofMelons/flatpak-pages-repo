@@ -90,20 +90,20 @@ jobs:
             run: |
                 set -e
                 mkdir -p ./${{ env.PAGES_REPO }}/repo
-                flatpak-builder --disable-updates --disable-download --ccache --sandbox --gpg-sign=${{ steps.gpg-key.outputs.keyid }} --repo="./${{ env.PAGES_REPO }}/repo" ${{ env.FLATPAK_BUILD }} ${{ env.FLATPAK_SRC }}/${{ inputs.manifest }}
+                flatpak-builder --disable-updates --disable-download --ccache --sandbox --gpg-sign=${{ steps.gpg-key.outputs.fingerprint }} --repo="./${{ env.PAGES_REPO }}/repo" ${{ env.FLATPAK_BUILD }} ${{ env.FLATPAK_SRC }}/${{ inputs.manifest }}
 
           - name: Prune Repo
             run: |
                 set -e
                 mkdir -p ./${{ env.PAGES_REPO }}/repo/refs/remotes ./${{ env.PAGES_REPO }}/repo/refs/mirrors
                 touch ./${{ env.PAGES_REPO }}/repo/refs/remotes/.gitkeep ./${{ env.PAGES_REPO }}/repo/refs/mirrors/.gitkeep
-                flatpak build-update-repo --gpg-sign=${{ steps.gpg-key.outputs.keyid }} --prune --prune-depth=${{ env.FLATPAK_HISTORY_LEN }} ./${{ env.PAGES_REPO }}/repo
+                flatpak build-update-repo --gpg-sign=${{ steps.gpg-key.outputs.fingerprint }} --prune --prune-depth=${{ env.FLATPAK_HISTORY_LEN }} ./${{ env.PAGES_REPO }}/repo
 
           - name: Generate Deltas
             if: ${{ env.FLATPAK_DELTAS }} 
             run: |
                 set -e
-                flatpak build-update-repo --gpg-sign=${{ steps.gpg-key.outputs.keyid }} --generate-static-deltas ./${{ env.PAGES_REPO }}/repo
+                flatpak build-update-repo --gpg-sign=${{ steps.gpg-key.outputs.fingerprint }} --generate-static-deltas ./${{ env.PAGES_REPO }}/repo
 
           - name: Write .flatpakrepo file
             run: |
