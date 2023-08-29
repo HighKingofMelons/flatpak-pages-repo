@@ -86,11 +86,11 @@ jobs:
                 gpg_private_key: ${{ secrets.PGP_PRIVATE_KEY }}
                 passphrase: ${{ secrets.PGP_PASS }}
 
-          - name: List Keys
+          - name: Prepare GPG-pubkey
             run: |
                 set -e
-                gpg -k
-                echo "${{ steps.gpg-key.outputs.fingerprint }}"
+                gpg -a --export ${{ steps.gpg-key.outputs.fingerprint }} > pubkey.gpg
+                export PUBKEY_BASE64=$(gpg --export ${{ steps.gpg-key.outputs.fingerprint }} | base64 --wrap=0)
 
           - name: Build flatpak
             run: |
@@ -98,18 +98,13 @@ jobs:
                 mkdir -p ./${{ env.PAGES_REPO }}/repo
                 flatpak-builder --disable-updates --disable-download --ccache --sandbox --gpg-sign=${{ steps.gpg-key.outputs.fingerprint }} --repo="./${{ env.PAGES_REPO }}/repo" ${{ env.FLATPAK_BUILD }} ${{ env.FLATPAK_SRC }}/${{ inputs.manifest }}
 
-          - name: Prune Repo
+          - name: Update Repo
             run: |
                 set -e
                 mkdir -p ./${{ env.PAGES_REPO }}/repo/refs/remotes ./${{ env.PAGES_REPO }}/repo/refs/mirrors
                 touch ./${{ env.PAGES_REPO }}/repo/refs/remotes/.gitkeep ./${{ env.PAGES_REPO }}/repo/refs/mirrors/.gitkeep
-                flatpak build-update-repo --gpg-sign=${{ steps.gpg-key.outputs.fingerprint }} --prune --prune-depth=${{ env.FLATPAK_HISTORY_LEN }} ./${{ env.PAGES_REPO }}/repo
-
-          - name: Generate Deltas
-            if: ${{ env.FLATPAK_DELTAS }} 
-            run: |
-                set -e
-                flatpak build-update-repo --gpg-sign=${{ steps.gpg-key.outputs.fingerprint }} --generate-static-deltas ./${{ env.PAGES_REPO }}/repo
+                flatpak build-update-repo --no-update-summary --prune --prune-depth=${{ env.FLATPAK_HISTORY_LEN }} ./${{ env.PAGES_REPO }}/repo
+                flatpak build-update-repo --gpg-sign=${{ steps.gpg-key.outputs.fingerprint }} --gpg-import=pubkey.gpg --generate-static-deltas ./${{ env.PAGES_REPO }}/repo
 
           - name: Write .flatpakrepo file
             run: |
@@ -117,7 +112,7 @@ jobs:
                 echo "[Flatpak Repo]
                 Title=${{ env.PAGES_REPO_URL }}
                 Url=${{ env.PAGES_REPO_URL }}repo/
-                GPGKey=${{ secrets.PGP_PUBLIC_KEY }}" > ${{ env.PAGES_REPO }}/${{ github.repository_owner }}.flatpakrepo
+                GPGKey=${{ env.PUBKEY_BASE64 }}" > ${{ env.PAGES_REPO }}/${{ github.repository_owner }}.flatpakrepo
         
           - name: Deploy Repo
             uses: peaceiris/actions-gh-pages@v3
