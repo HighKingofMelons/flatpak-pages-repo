@@ -86,6 +86,11 @@ jobs:
                 gpg_private_key: ${{ secrets.PGP_PRIVATE_KEY }}
                 passphrase: ${{ secrets.PGP_PASS }}
 
+          - name: List Keys
+            run: |
+                set -e
+                gpg -k
+
           - name: Build flatpak
             run: |
                 set -e
