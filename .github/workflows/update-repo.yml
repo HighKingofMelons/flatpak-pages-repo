@@ -79,30 +79,38 @@ jobs:
                 restore-keys: |
                     flatpak-builder-
 
+          - name: Import GPG-key
+            id: gpg-key
+            uses: crazy-max/ghaction-import-gpg@v5
+            with:
+                gpg_private_key: ${{ secrets.PGP_PRIVATE_KEY }}
+                passphrase: ${{ secrets.PGP_PASS }}
+
           - name: Build flatpak
             run: |
                 set -e
-                flatpak-builder --disable-updates --disable-download --ccache --sandbox --repo="./${{ env.PAGES_REPO }}/repo" ${{ env.FLATPAK_BUILD }} ${{ env.FLATPAK_SRC }}/${{ inputs.manifest }}
+                flatpak-builder --disable-updates --disable-download --ccache --sandbox --gpg-sign=${{ steps.gpg-key.outputs.keyid }} --repo="./${{ env.PAGES_REPO }}/repo" ${{ env.FLATPAK_BUILD }} ${{ env.FLATPAK_SRC }}/${{ inputs.manifest }}
 
           - name: Prune Repo
             run: |
                 set -e
                 mkdir -p ./${{ env.PAGES_REPO }}/repo/refs/remotes ./${{ env.PAGES_REPO }}/repo/refs/mirrors
                 touch ./${{ env.PAGES_REPO }}/repo/refs/remotes/.gitkeep ./${{ env.PAGES_REPO }}/repo/refs/mirrors/.gitkeep
-                flatpak build-update-repo --prune --prune-depth=${{ env.FLATPAK_HISTORY_LEN }} ./${{ env.PAGES_REPO }}/repo
+                flatpak build-update-repo --gpg-sign=${{ steps.gpg-key.outputs.keyid }} --prune --prune-depth=${{ env.FLATPAK_HISTORY_LEN }} ./${{ env.PAGES_REPO }}/repo
 
           - name: Generate Deltas
             if: ${{ env.FLATPAK_DELTAS }} 
             run: |
                 set -e
-                flatpak build-update-repo --generate-static-deltas ./${{ env.PAGES_REPO }}/repo
+                flatpak build-update-repo --gpg-sign=${{ steps.gpg-key.outputs.keyid }} --generate-static-deltas ./${{ env.PAGES_REPO }}/repo
 
           - name: Write .flatpakrepo file
             run: |
                 set -e
                 echo "[Flatpak Repo]
                 Title=${{ env.PAGES_REPO_URL }}
-                Url=${{ env.PAGES_REPO_URL }}repo/" > ${{ env.PAGES_REPO }}/${{ github.repository_owner }}.flatpakrepo
+                Url=${{ env.PAGES_REPO_URL }}repo/
+                GPGKey=${{ secrets.PGP_PUBLIC_KEY }}" > ${{ env.PAGES_REPO }}/${{ github.repository_owner }}.flatpakrepo
         
           - name: Deploy Repo
             uses: peaceiris/actions-gh-pages@v3
