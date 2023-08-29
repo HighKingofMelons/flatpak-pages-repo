@@ -90,6 +90,7 @@ jobs:
             run: |
                 set -e
                 gpg -k
+                echo "${{ steps.gpg-key.outputs.fingerprint }}"
 
           - name: Build flatpak
             run: |
