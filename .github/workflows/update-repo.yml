@@ -112,7 +112,7 @@ jobs:
                 echo "[Flatpak Repo]
                 Title=${{ env.PAGES_REPO_URL }}
                 Url=${{ env.PAGES_REPO_URL }}repo/
-                GPGKey=${{ env.PUBKEY_BASE64 }}" > ${{ env.PAGES_REPO }}/${{ github.repository_owner }}.flatpakrepo
+                GPGKey=$PUBKEY_BASE64" > ${{ env.PAGES_REPO }}/${{ github.repository_owner }}.flatpakrepo
         
           - name: Deploy Repo
             uses: peaceiris/actions-gh-pages@v3
