@@ -89,6 +89,7 @@ jobs:
           - name: Build flatpak
             run: |
                 set -e
+                mkdir -p ./${{ env.PAGES_REPO }}/repo
                 flatpak-builder --disable-updates --disable-download --ccache --sandbox --gpg-sign=${{ steps.gpg-key.outputs.keyid }} --repo="./${{ env.PAGES_REPO }}/repo" ${{ env.FLATPAK_BUILD }} ${{ env.FLATPAK_SRC }}/${{ inputs.manifest }}
 
           - name: Prune Repo
