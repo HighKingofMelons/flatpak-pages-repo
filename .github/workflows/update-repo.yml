@@ -110,7 +110,7 @@ jobs:
                 set -e
                 echo "[Flatpak Repo]
                 Title=${{ env.PAGES_REPO_URL }}
-                Url=${{ env.PAGES_REPO_URL }}repo/
+                Url=https://${{ env.PAGES_REPO_URL }}repo/
                 GPGKey=$(cat pubkey.gpg | base64 --wrap=0)" > ${{ env.PAGES_REPO }}/${{ github.repository_owner }}.flatpakrepo
         
           - name: Deploy Repo
